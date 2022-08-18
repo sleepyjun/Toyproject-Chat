@@ -1,18 +1,38 @@
 <template>
-  <div class="home">
+  <div class="container">
     <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <LogIn 
+      v-if="true"
+      @onSubmit="onSubmit"
+    />
+    <!-- <select /> -->
   </div>
 </template>
 
 <script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
+import SocketioService from '@/services/socketio.service.js'
+import LogIn from '@/components/LogIn';
 
 export default {
   name: 'HomeView',
   components: {
-    HelloWorld
+    LogIn,
+  },
+  data () {
+    return {
+      socket: null,
+    };
+  },
+  created () {
+    this.socket = SocketioService.setupSocketConnection();
+  },
+  methods: {
+    onSubmit (username) {
+      console.log(username);
+      sessionStorage.setItem('user', username);
+      this.socket.auth = { username };
+      this.socket.connect();
+    }
   }
 }
 </script>

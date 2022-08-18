@@ -2,15 +2,18 @@ import { io } from "socket.io-client";
 
 class SocketioService {
   socket = null;
-  setupSocketConnection(nickname) {
+  setupSocketConnection() {
     console.log('Hi');
     if (this.socket !== null) return this.socket;
     this.socket = io('http://localhost:3000/chat', {
-      // reconnection: false, // DEV OPTION
-      auth: {
-        nickname: nickname,
-      },
+      reconnection: false, // DEV OPTION
     });
+    this.socket.onAny((event, ...args) => {
+      console.log(event, args);
+    });
+    this.socket.on('connect_error', err => {
+      console.log(err);
+    })
     return this.socket;
   }
 
@@ -23,3 +26,4 @@ class SocketioService {
 }
 
 export default new SocketioService();
+

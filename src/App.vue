@@ -2,17 +2,6 @@
   <router-view />
 </template>
 
-
-<script>
-import SocketioService from '@/services/socketio.service.js'
-
-export default {
-  name: 'App',
-  created () {
-    this.socket = SocketioService.setupSocketConnection('foo');
-  }
-}
-</script>
 <style lang="scss">
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
