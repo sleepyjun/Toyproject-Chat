@@ -6,7 +6,7 @@ class SocketioService {
     console.log('Hi');
     if (this.socket !== null) return this.socket;
     this.socket = io('http://localhost:3000/chat', {
-      reconnection: false, // DEV OPTION
+      autoConnect: false,
     });
     this.socket.onAny((event, ...args) => {
       console.log(event, args);
@@ -16,7 +16,7 @@ class SocketioService {
     })
     return this.socket;
   }
-
+  
   disconnect() {
     if (this.socket) {
       this.socket.disconnect();

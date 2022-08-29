@@ -1,15 +1,18 @@
 <template>
-  <div class="username-wrapper">
+  <div class="container">
+    <div class="username-wrapper">
     <form @submit.prevent="onSubmit">
       <input @input="inputHelper" placeholder="유저 이름을 입력해주세요"/>
       <button :disabled="!isValid">확인</button>
     </form>
   </div>
+  </div>
+  
 </template>
 
 <script>
 export default {
-  name: "LogIn",
+  name: 'LoginView',
   data() {
     return {
       username: '',
@@ -28,6 +31,6 @@ export default {
       this.username = event.target.value;
     }
   }
-  
+
 }
 </script>
