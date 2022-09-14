@@ -29,7 +29,6 @@
     },
     methods: {
       onSubmit(nickname) {
-        console.log(nickname);
         sessionStorage.setItem("nickname", nickname);
         this.login = true;
         this.socket.auth = { nickname };
