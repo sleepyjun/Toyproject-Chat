@@ -10,14 +10,9 @@ import MakeGroup from './MakeGroup';
 export default {
   components: { MakeGroup },
   name: 'ChatNavbar',
-  data () {
-    return {
-      nickname: ''
-    };
+  props: {
+    nickname: String
   },
-  created () {
-    this.nickname = sessionStorage.getItem("nickname");
-  }
 };
 </script>
 

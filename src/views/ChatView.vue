@@ -10,11 +10,15 @@
           @select="onSelect(group)"
         />
       </div>
-      <ChatNavbar />
+      <ChatNavbar 
+        :nickname="nickname"
+      />
     </div>
     <MessagePanel 
       v-if="selectedGroup" 
       :group="selectedGroup"
+      :messages="messages"
+      @chat="chat"
     />
   </div>
 
@@ -61,14 +65,18 @@ export default {
   data () {
     return {
       socket: null,
-      groups: [],
       selectedGroup: null,
+      groups: [],
+      messages: [],
+      nickname: '',
       groupName: '',
       groupExplain: '',
     };
   },
   created () {
     this.socket = SocketioService.setupSocketConnection();
+    this.nickname = sessionStorage.getItem('nickname');
+    
     this.socket.on('groups', (groups) => {
       groups.forEach(group => {
         this.groups.push(group);
@@ -76,12 +84,32 @@ export default {
     })
     this.socket.on('group-created', (group) => {
       this.groups.push(group);
-      console.log(group);
     });
+    this.socket.on('chat', (data) => {
+      const sended = new Date(data.createdAt)
+      if (sended.toDateString() === new Date().toDateString()) {
+        data.createdAt = sended.toLocaleTimeString(navigator.language, {
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      } else {
+        data.createdAt = sended.getUTCMonth() + 1 + '/' + sended.getUTCDate()
+      }
+      
+      const messageData = {
+        self: this.nickname === data.sender,
+        ...data,
+      }
+      this.messages.push(messageData);
+      console.log(messageData);
+    })
 
-    this.socket.on('error', (data) => {
+    this.socket.on('db_error', (data) => {
       if (data.name === 'SequelizeUniqueConstraintError') {
         alert('이미 생성된 그룹 이름입니다');
+      }
+      else {
+        console.log(data);
       }
     });
   },
@@ -96,6 +124,15 @@ export default {
       });
       this.groupName = '';
       this.groupExplain = '';
+    },
+    chat (message) {
+      if (this.selectedGroup) {
+        this.socket.emit('chat', {
+          nickname: this.nickname, 
+          groupName: this.selectedGroup.name,
+          message,
+        });
+      }
     },
     groupNameInputHelper (event) {
       this.groupName = event.target.value;

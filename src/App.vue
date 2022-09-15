@@ -4,9 +4,9 @@
 </template>
 
 <script>
-  import SocketioService from "@/services/socketio.service";
-  import LoginView from "@/views/LoginView";
-  import ChatView from "@/views/ChatView";
+  import SocketioService from '@/services/socketio.service';
+  import LoginView from '@/views/LoginView';
+  import ChatView from '@/views/ChatView';
 
   export default {
     components: {
@@ -22,17 +22,21 @@
     created() {
       this.socket = SocketioService.setupSocketConnection();
 
-      this.socket.on("connect_error", (err) => {
-        console.log(err);
+      this.socket.on('connect_error', (err) => {
         this.login = false;
+        sessionStorage.removeItem('nickname');
+        if (err.message === 'duplicated nickname') {
+          alert('이미 사용중인 닉네임입니다');
+        }
       });
     },
     methods: {
       onSubmit(nickname) {
-        sessionStorage.setItem("nickname", nickname);
-        this.login = true;
         this.socket.auth = { nickname };
         this.socket.connect();
+
+        this.login = true;
+        sessionStorage.setItem('nickname', nickname);
       },
     },
     unmounted() {
@@ -40,6 +44,7 @@
         SocketioService.disconnect();
         this.socket = null;
       }
+      sessionStorage.removeItem('nickname');
     },
   };
 </script>

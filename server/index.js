@@ -37,14 +37,14 @@ const init = () => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    msg: {
+    group: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    room: {
+    message: {
       type: DataTypes.STRING,
       allowNull: false,
-    }
+    },
   }, {
     timestamps: true,
     createdAt: true,
@@ -60,14 +60,18 @@ const init = () => {
 }
 const { groupModel, chatModel } = init();
 
+const currentUsers = new Set();
 const chat = io.of('/chat');
-
 chat.use((socket, next) => {
   const nickname = socket.handshake.auth.nickname;
   if (!nickname) {
     return next(new Error('invalid nickname'));
   }
+  if (currentUsers.has(nickname)) {
+    return next(new Error('duplicated nickname'));
+  }
   socket.nickname = nickname;
+  currentUsers.add(nickname);
   next();
 });
 
@@ -75,7 +79,9 @@ chat.on('connection', async socket => {
   console.log(socket.nickname + ' connected!');
 
   const groups = (await groupModel.findAll()).map(obj => obj.dataValues);
-  console.log(groups);
+  groups.forEach(({name}) => {
+    socket.join(name);
+  });
   socket.emit('groups', groups);
 
   socket.on('create-group', ({ groupName, groupExplain }) => {
@@ -86,15 +92,38 @@ chat.on('connection', async socket => {
     groupModel
       .create(group)
       .then(() => {
+        // eslint-disable-next-line no-unused-vars
+        for (const [_, socket] of chat.sockets) {
+          socket.join(groupName);
+        }
         chat.emit('group-created', group);
       })
       .catch((err) => {
-        chat.emit('error', err);
+        socket.emit('db_error', err);
       });
   });
 
+  socket.on('chat', ({ nickname, groupName, message }) => {
+    const log = {
+      sender: nickname,
+      group: groupName,
+      message: message,
+    };
+
+    chatModel
+      .create(log)
+      .then((query) => {
+        chat.to(groupName).emit('chat', query.dataValues);
+      })
+      .catch((err) => {
+        socket.emit('db_error', err);
+      });
+    
+  })
+
   socket.on('disconnect', () => {
     console.log(socket.nickname + ' disconnected');
+    currentUsers.delete(socket.nickname);
   });
 })
 
